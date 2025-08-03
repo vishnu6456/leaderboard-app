@@ -4,12 +4,16 @@ from collections import defaultdict
 from datetime import datetime
 import os
 import logging
+import sys
 from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 logger = logging.getLogger(__name__)
 
@@ -21,6 +25,12 @@ app = Flask(__name__)
 # Constants
 API_TOKEN = os.getenv('API_TOKEN')
 BASE_URL = os.getenv('BASE_URL', "https://tcms.aiojiraapps.com/aio-tcms/api/v1/project/TEG/testcycle/TEG-CY-55/testcase")
+
+# Log startup configuration
+logger.info(f"Starting application with BASE_URL: {BASE_URL}")
+logger.info(f"API_TOKEN is {'set' if API_TOKEN else 'not set'}")
+logger.info(f"Environment: {os.getenv('FLASK_ENV', 'not set')}")
+logger.info(f"Port: {os.getenv('PORT', 'not set')}")
 
 if not API_TOKEN:
     logger.error("API_TOKEN environment variable is not set")
@@ -161,7 +171,21 @@ def not_found_error(error):
 def internal_error(error):
     return render_template('leaderboard.html', error_message="Internal server error. Please try again later."), 500
 
+@app.route("/health")
+def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+@app.route("/debug")
+def debug_info():
+    if os.getenv('FLASK_ENV') == 'development':
+        return {
+            "env_vars": dict(os.environ),
+            "python_version": sys.version,
+            "working_directory": os.getcwd(),
+        }
+    return {"status": "Debug endpoint only available in development"}
+
 if __name__ == "__main__":
-    # Only enable debug mode in development
-    debug_mode = os.getenv('FLASK_ENV') == 'development'
-    app.run(debug=debug_mode)
+    port = int(os.getenv('PORT', 8080))
+    logger.info(f"Starting server on port {port}")
+    app.run(host='0.0.0.0', port=port)
