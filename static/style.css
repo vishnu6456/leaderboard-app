@@ -495,28 +495,3 @@ tbody tr.fade-in {
     border-color: transparent;
     color: white;
 }
-
-/* Error Message */
-.error-message {
-    background: #FEF2F2;
-    border: 1px solid #FCA5A5;
-    color: #DC2626;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    animation: fadeIn 0.3s ease-out forwards;
-}
-
-.error-message svg {
-    flex-shrink: 0;
-    color: #DC2626;
-}
-
-.error-message p {
-    margin: 0;
-    font-size: 0.925rem;
-    line-height: 1.5;
-}
