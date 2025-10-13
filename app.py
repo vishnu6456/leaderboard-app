@@ -21,7 +21,7 @@ owner_id_to_name = {
     "712020:86eb614f-7084-492b-ab3b-53196fea7c6b": "Shameer",
     "712020:c496c155-9d04-4860-92d1-e274eaa32f48": "Suchitra",
     "712020:b93551fd-3c96-4f9d-95b7-a5ba3652db73": "Vignesh",
-    "712020:61f76776f51e85007082803f": "Vishnu",
+    "61f76776f51e85007082803f": "Vishnu",
     "712020:c5ac7c55-2162-41a0-94fc-1f881b748f94": "Mantina",
     "712020:80c70e4f-43c9-4fb4-af99-9fbc8970e39f": "Deeksha",
     "712020:bd70b0da-719f-4c31-9099-a73d1f4322a8": "Santhosh",
