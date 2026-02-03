@@ -44,25 +44,50 @@
         {% endif %}
 
         {% if leaderboard %}
-            <table>
+            <table id="leaderboardTable">
                 <thead>
                     <tr>
                         <th>Rank</th>
                         <th>Team Member</th>
-                        <th>Automated Tests</th>
+                        <th class="sortable-header" data-sort="count">
+                            Automated Tests
+                            <span class="sort-indicator">
+                                <svg class="sort-icon sort-desc active" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 10l5 5 5-5H7z" fill="currentColor"/>
+                                </svg>
+                                <svg class="sort-icon sort-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </th>
+                        <th class="sortable-header" data-sort="aes">
+                            AES
+                            <span class="sort-indicator">
+                                <svg class="sort-icon sort-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 10l5 5 5-5H7z" fill="currentColor"/>
+                                </svg>
+                                <svg class="sort-icon sort-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for owner, count in leaderboard %}
-                        <tr class="fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                <tbody id="leaderboardBody">
+                    {% for entry in leaderboard %}
+                        <tr class="fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s" 
+                            data-name="{{ entry.name }}" 
+                            data-count="{{ entry.count }}" 
+                            data-aes="{{ entry.aes }}">
                             <td class="rank">#{{ loop.index }}</td>
                             <td class="owner">
                                 <div class="owner-info">
-                                    <span class="avatar">{{ owner[0] | upper }}</span>
-                                    <span>{{ owner }}</span>
+                                    <span class="avatar">{{ entry.name[0] | upper }}</span>
+                                    <span>{{ entry.name }}</span>
                                 </div>
                             </td>
-                            <td class="count">{{ count }}</td>
+                            <td class="count">{{ entry.count }}</td>
+                            <td class="aes-score">{{ entry.aes }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -141,6 +166,70 @@
                 const thirtyDaysAgo = new Date(today.setDate(today.getDate() - 30));
                 document.getElementById('start_date').valueAsDate = thirtyDaysAgo;
                 document.getElementById('end_date').valueAsDate = new Date();
+            }
+
+            // Sortable table functionality
+            const table = document.getElementById('leaderboardTable');
+            if (table) {
+                const headers = table.querySelectorAll('.sortable-header');
+                let currentSort = { column: 'count', direction: 'desc' };
+
+                headers.forEach(header => {
+                    header.addEventListener('click', function() {
+                        const sortColumn = this.getAttribute('data-sort');
+                        
+                        // Toggle direction if clicking same column, otherwise default to desc
+                        if (currentSort.column === sortColumn) {
+                            currentSort.direction = currentSort.direction === 'desc' ? 'asc' : 'desc';
+                        } else {
+                            currentSort.column = sortColumn;
+                            currentSort.direction = 'desc';
+                        }
+
+                        // Update visual indicators
+                        headers.forEach(h => {
+                            const indicators = h.querySelectorAll('.sort-icon');
+                            indicators.forEach(icon => icon.classList.remove('active'));
+                        });
+
+                        const activeIcon = this.querySelector(`.sort-${currentSort.direction}`);
+                        if (activeIcon) {
+                            activeIcon.classList.add('active');
+                        }
+
+                        // Sort the table
+                        sortTable(sortColumn, currentSort.direction);
+                    });
+                });
+
+                function sortTable(column, direction) {
+                    const tbody = document.getElementById('leaderboardBody');
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                    rows.sort((a, b) => {
+                        const aValue = parseFloat(a.getAttribute(`data-${column}`));
+                        const bValue = parseFloat(b.getAttribute(`data-${column}`));
+
+                        if (direction === 'desc') {
+                            return bValue - aValue;
+                        } else {
+                            return aValue - bValue;
+                        }
+                    });
+
+                    // Clear and re-append rows
+                    tbody.innerHTML = '';
+                    rows.forEach((row, index) => {
+                        // Update rank
+                        const rankCell = row.querySelector('.rank');
+                        rankCell.textContent = `#${index + 1}`;
+                        
+                        // Reset animation delay
+                        row.style.animationDelay = `${index * 0.05}s`;
+                        
+                        tbody.appendChild(row);
+                    });
+                }
             }
         });
     </script>

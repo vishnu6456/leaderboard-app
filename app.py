@@ -36,6 +36,28 @@ def to_millis(date_str):
     except Exception:
         return None
 
+def get_aes_value(test_case):
+    """Extract AES value from custom fields"""
+    custom_fields = test_case.get("customFields", [])
+    
+    for field in custom_fields:
+        field_name = field.get("name", "")
+        field_id = field.get("ID", "")
+        
+        # Match by field name, field ID, or partial name match
+        if field_name == "Automation Effort Score (AES)" or field_id == 14 or "AES" in field_name:
+            value_obj = field.get("value", {})
+            if isinstance(value_obj, dict):
+                aes_str = value_obj.get("value", "0")
+            else:
+                aes_str = str(value_obj) if value_obj else "0"
+            try:
+                return int(aes_str)
+            except (ValueError, TypeError):
+                return 0
+    
+    return 0
+
 def fetch_leaderboard(start_date=None, end_date=None):
     start_millis = to_millis(start_date) if start_date else float("-inf")
     end_millis = to_millis(end_date) if end_date else float("inf")
@@ -47,6 +69,7 @@ def fetch_leaderboard(start_date=None, end_date=None):
     pending_automation = 0
     automated_in_period = 0
     automation_leaderboard = defaultdict(int)
+    aes_leaderboard = defaultdict(int)  # Track AES scores
 
     while has_more:
         url = f"{BASE_URL}?startAt={start_at}&limit={limit}"
@@ -78,6 +101,9 @@ def fetch_leaderboard(start_date=None, end_date=None):
                     if automation_owner_id:
                         owner_name = owner_id_to_name.get(automation_owner_id, f"Unknown ({automation_owner_id})")
                         automation_leaderboard[owner_name] += 1
+                        # Add AES score for this test case (0 if no AES field found)
+                        aes_value = get_aes_value(test_case)
+                        aes_leaderboard[owner_name] += aes_value
             else:
                 pending_automation += 1
 
@@ -86,8 +112,27 @@ def fetch_leaderboard(start_date=None, end_date=None):
         else:
             start_at += limit
 
-    sorted_leaderboard = sorted(automation_leaderboard.items(), key=lambda x: x[1], reverse=True)
-    return sorted_leaderboard, total_automated, pending_automation, automated_in_period
+    # Combine automation count and AES scores into a single structure
+    combined_leaderboard = []
+    for owner_name in automation_leaderboard.keys():
+        combined_leaderboard.append({
+            'name': owner_name,
+            'count': automation_leaderboard[owner_name],
+            'aes': aes_leaderboard[owner_name]
+        })
+    
+    # Sort by count (default sorting)
+    combined_leaderboard.sort(key=lambda x: x['count'], reverse=True)
+    
+    # Print summary for debugging
+    print("\n=== LEADERBOARD SUMMARY ===")
+    for entry in combined_leaderboard:
+        print(f"{entry['name']}: {entry['count']} tests, AES: {entry['aes']}")
+    print(f"Total Automated: {total_automated}")
+    print(f"Automated in Period: {automated_in_period}")
+    print("=" * 30 + "\n")
+    
+    return combined_leaderboard, total_automated, pending_automation, automated_in_period
 
 @app.route("/", methods=["GET", "POST"])
 def leaderboard():
@@ -100,6 +145,7 @@ def leaderboard():
     if request.method == "POST":
         start_date = request.form.get("start_date", "").strip()
         end_date = request.form.get("end_date", "").strip()
+        
         leaderboard, total_automated, pending_automation, automated_in_period = fetch_leaderboard(start_date or None, end_date or None)
 
     return render_template("leaderboard.html",

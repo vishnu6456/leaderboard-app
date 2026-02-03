@@ -109,11 +109,22 @@ input {
     background: var(--card-bg);
 }
 
-input:hover {
+select {
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    background: var(--card-bg);
+    cursor: pointer;
+}
+
+input:hover, select:hover {
     border-color: var(--primary-color);
 }
 
-input:focus {
+input:focus, select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 4px rgba(123, 104, 238, 0.1);
@@ -494,4 +505,56 @@ tbody tr.fade-in {
     background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
     border-color: transparent;
     color: white;
+}
+
+/* Sortable Headers */
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.sortable-header:hover {
+    background-color: rgba(123, 104, 238, 0.08);
+}
+
+.sort-indicator {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+    gap: 2px;
+}
+
+.sort-icon {
+    display: block;
+    opacity: 0.2;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.sort-icon.active {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.sortable-header:hover .sort-icon {
+    opacity: 0.5;
+}
+
+.sortable-header:hover .sort-icon.active {
+    opacity: 1;
+}
+
+/* AES Score Column */
+.aes-score {
+    font-weight: 600;
+    color: var(--success-color);
+    font-size: 1rem;
+}
+
+/* Wider table for additional column */
+.container {
+    max-width: 900px;
 }
