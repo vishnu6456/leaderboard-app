@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # Constants
 API_TOKEN = "AioAuth NWFiNDUyZTYtMGVlZS0zNDgxLTg5ZTUtNjY2N2M3ZTEzN2YxLjcyNmJjOTNmLTUzM2EtNDk3Ni1hMGY3LTkyZTU5ZDcyMWY0NA=="
-BASE_URL = "https://tcms.aiojiraapps.com/aio-tcms/api/v1/project/TEG/testcycle/TEG-CY-142/testcase"
+BASE_URL = "https://tcms.aiojiraapps.com/aio-tcms/api/v1/project/TEG/testcycle/TEG-CY-161/testcase"
 HEADERS = {
     "accept": "application/json;charset=utf-8",
     "Authorization": API_TOKEN
