@@ -40,16 +40,19 @@
                 <p>Total Test Cases Automated: <strong>{{ total_automated }}</strong></p>
                 <p>Pending Cases to Automate: <strong>{{ pending_automation }}</strong></p>
                 <p>Test Cases Automated during the period: <strong>{{ automated_in_period }}</strong></p>
+                <p>Test Cases In Progress during the period: <strong>{{ in_progress_in_period }}</strong></p>
             </div>
         {% endif %}
 
-        {% if leaderboard %}
-            <table id="leaderboardTable">
+        <!-- Automated Tests Leaderboard -->
+        {% if automated_leaderboard %}
+            <h2 class="section-title">✅ Automated Tests</h2>
+            <table id="automatedTable" class="leaderboard-table">
                 <thead>
                     <tr>
                         <th>Rank</th>
                         <th>Team Member</th>
-                        <th class="sortable-header" data-sort="count">
+                        <th class="sortable-header" data-table="automated" data-sort="count">
                             Automated Tests
                             <span class="sort-indicator">
                                 <svg class="sort-icon sort-desc active" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -60,7 +63,7 @@
                                 </svg>
                             </span>
                         </th>
-                        <th class="sortable-header" data-sort="aes">
+                        <th class="sortable-header" data-table="automated" data-sort="aes">
                             AES
                             <span class="sort-indicator">
                                 <svg class="sort-icon sort-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -73,8 +76,8 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody id="leaderboardBody">
-                    {% for entry in leaderboard %}
+                <tbody id="automatedBody">
+                    {% for entry in automated_leaderboard %}
                         <tr class="fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s" 
                             data-name="{{ entry.name }}" 
                             data-count="{{ entry.count }}" 
@@ -92,12 +95,67 @@
                     {% endfor %}
                 </tbody>
             </table>
-        {% elif test_case_count == 0 and start_date and end_date %}
+        {% endif %}
+
+        <!-- In Progress Tests Leaderboard -->
+        {% if in_progress_leaderboard %}
+            <h2 class="section-title">🔄 In Progress Tests</h2>
+            <table id="inProgressTable" class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team Member</th>
+                        <th class="sortable-header" data-table="inprogress" data-sort="count">
+                            In Progress Tests
+                            <span class="sort-indicator">
+                                <svg class="sort-icon sort-desc active" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 10l5 5 5-5H7z" fill="currentColor"/>
+                                </svg>
+                                <svg class="sort-icon sort-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </th>
+                        <th class="sortable-header" data-table="inprogress" data-sort="aes">
+                            AES
+                            <span class="sort-indicator">
+                                <svg class="sort-icon sort-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 10l5 5 5-5H7z" fill="currentColor"/>
+                                </svg>
+                                <svg class="sort-icon sort-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="inProgressBody">
+                    {% for entry in in_progress_leaderboard %}
+                        <tr class="fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s" 
+                            data-name="{{ entry.name }}" 
+                            data-count="{{ entry.count }}" 
+                            data-aes="{{ entry.aes }}">
+                            <td class="rank">#{{ loop.index }}</td>
+                            <td class="owner">
+                                <div class="owner-info">
+                                    <span class="avatar">{{ entry.name[0] | upper }}</span>
+                                    <span>{{ entry.name }}</span>
+                                </div>
+                            </td>
+                            <td class="count">{{ entry.count }}</td>
+                            <td class="aes-score in-progress-aes">{{ entry.aes }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {% if not automated_leaderboard and not in_progress_leaderboard and start_date and end_date %}
             <div class="no-data">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <p>No automated test cases found for the selected date range.</p>
+                <p>No test cases found for the selected date range.</p>
                 <button onclick="window.location.href='/'">Reset Filters</button>
             </div>
         {% endif %}
@@ -168,9 +226,11 @@
                 document.getElementById('end_date').valueAsDate = new Date();
             }
 
-            // Sortable table functionality
-            const table = document.getElementById('leaderboardTable');
-            if (table) {
+            // Sortable table functionality for both tables
+            function initializeSortableTable(tableId, bodyId) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+
                 const headers = table.querySelectorAll('.sortable-header');
                 let currentSort = { column: 'count', direction: 'desc' };
 
@@ -198,39 +258,45 @@
                         }
 
                         // Sort the table
-                        sortTable(sortColumn, currentSort.direction);
+                        sortTable(bodyId, sortColumn, currentSort.direction);
                     });
                 });
-
-                function sortTable(column, direction) {
-                    const tbody = document.getElementById('leaderboardBody');
-                    const rows = Array.from(tbody.querySelectorAll('tr'));
-
-                    rows.sort((a, b) => {
-                        const aValue = parseFloat(a.getAttribute(`data-${column}`));
-                        const bValue = parseFloat(b.getAttribute(`data-${column}`));
-
-                        if (direction === 'desc') {
-                            return bValue - aValue;
-                        } else {
-                            return aValue - bValue;
-                        }
-                    });
-
-                    // Clear and re-append rows
-                    tbody.innerHTML = '';
-                    rows.forEach((row, index) => {
-                        // Update rank
-                        const rankCell = row.querySelector('.rank');
-                        rankCell.textContent = `#${index + 1}`;
-                        
-                        // Reset animation delay
-                        row.style.animationDelay = `${index * 0.05}s`;
-                        
-                        tbody.appendChild(row);
-                    });
-                }
             }
+
+            function sortTable(bodyId, column, direction) {
+                const tbody = document.getElementById(bodyId);
+                if (!tbody) return;
+                
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                rows.sort((a, b) => {
+                    const aValue = parseFloat(a.getAttribute(`data-${column}`));
+                    const bValue = parseFloat(b.getAttribute(`data-${column}`));
+
+                    if (direction === 'desc') {
+                        return bValue - aValue;
+                    } else {
+                        return aValue - bValue;
+                    }
+                });
+
+                // Clear and re-append rows
+                tbody.innerHTML = '';
+                rows.forEach((row, index) => {
+                    // Update rank
+                    const rankCell = row.querySelector('.rank');
+                    rankCell.textContent = `#${index + 1}`;
+                    
+                    // Reset animation delay
+                    row.style.animationDelay = `${index * 0.05}s`;
+                    
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Initialize both tables
+            initializeSortableTable('automatedTable', 'automatedBody');
+            initializeSortableTable('inProgressTable', 'inProgressBody');
         });
     </script>
 </body>

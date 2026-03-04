@@ -68,8 +68,15 @@ def fetch_leaderboard(start_date=None, end_date=None):
     total_automated = 0
     pending_automation = 0
     automated_in_period = 0
+    in_progress_in_period = 0
+    
+    # Automated tracking
     automation_leaderboard = defaultdict(int)
-    aes_leaderboard = defaultdict(int)  # Track AES scores
+    aes_automated_leaderboard = defaultdict(int)
+    
+    # In Progress tracking
+    in_progress_leaderboard = defaultdict(int)
+    aes_in_progress_leaderboard = defaultdict(int)
 
     while has_more:
         url = f"{BASE_URL}?startAt={start_at}&limit={limit}"
@@ -101,9 +108,20 @@ def fetch_leaderboard(start_date=None, end_date=None):
                     if automation_owner_id:
                         owner_name = owner_id_to_name.get(automation_owner_id, f"Unknown ({automation_owner_id})")
                         automation_leaderboard[owner_name] += 1
-                        # Add AES score for this test case (0 if no AES field found)
+                        # Add AES score for automated test cases
                         aes_value = get_aes_value(test_case)
-                        aes_leaderboard[owner_name] += aes_value
+                        aes_automated_leaderboard[owner_name] += aes_value
+                        
+            elif automation_status == "In Progress":
+                # Track In Progress test cases
+                if updated_date and start_millis <= updated_date <= end_millis:
+                    in_progress_in_period += 1
+                    if automation_owner_id:
+                        owner_name = owner_id_to_name.get(automation_owner_id, f"Unknown ({automation_owner_id})")
+                        in_progress_leaderboard[owner_name] += 1
+                        # Add AES score for in-progress test cases
+                        aes_value = get_aes_value(test_case)
+                        aes_in_progress_leaderboard[owner_name] += aes_value
             else:
                 pending_automation += 1
 
@@ -112,47 +130,63 @@ def fetch_leaderboard(start_date=None, end_date=None):
         else:
             start_at += limit
 
-    # Combine automation count and AES scores into a single structure
-    combined_leaderboard = []
+    # Combine automated count and AES scores
+    automated_combined = []
     for owner_name in automation_leaderboard.keys():
-        combined_leaderboard.append({
+        automated_combined.append({
             'name': owner_name,
             'count': automation_leaderboard[owner_name],
-            'aes': aes_leaderboard[owner_name]
+            'aes': aes_automated_leaderboard[owner_name]
         })
+    automated_combined.sort(key=lambda x: x['count'], reverse=True)
     
-    # Sort by count (default sorting)
-    combined_leaderboard.sort(key=lambda x: x['count'], reverse=True)
+    # Combine in-progress count and AES scores
+    in_progress_combined = []
+    for owner_name in in_progress_leaderboard.keys():
+        in_progress_combined.append({
+            'name': owner_name,
+            'count': in_progress_leaderboard[owner_name],
+            'aes': aes_in_progress_leaderboard[owner_name]
+        })
+    in_progress_combined.sort(key=lambda x: x['count'], reverse=True)
     
     # Print summary for debugging
-    print("\n=== LEADERBOARD SUMMARY ===")
-    for entry in combined_leaderboard:
+    print("\n=== AUTOMATED LEADERBOARD ===")
+    for entry in automated_combined:
         print(f"{entry['name']}: {entry['count']} tests, AES: {entry['aes']}")
-    print(f"Total Automated: {total_automated}")
-    print(f"Automated in Period: {automated_in_period}")
+    print(f"Total Automated in Period: {automated_in_period}")
+    
+    print("\n=== IN PROGRESS LEADERBOARD ===")
+    for entry in in_progress_combined:
+        print(f"{entry['name']}: {entry['count']} tests, AES: {entry['aes']}")
+    print(f"Total In Progress in Period: {in_progress_in_period}")
     print("=" * 30 + "\n")
     
-    return combined_leaderboard, total_automated, pending_automation, automated_in_period
+    return automated_combined, in_progress_combined, total_automated, pending_automation, automated_in_period, in_progress_in_period
 
 @app.route("/", methods=["GET", "POST"])
 def leaderboard():
-    leaderboard = []
+    automated_leaderboard = []
+    in_progress_leaderboard = []
     total_automated = 0
     pending_automation = 0
     automated_in_period = 0
+    in_progress_in_period = 0
     start_date = end_date = ""
 
     if request.method == "POST":
         start_date = request.form.get("start_date", "").strip()
         end_date = request.form.get("end_date", "").strip()
         
-        leaderboard, total_automated, pending_automation, automated_in_period = fetch_leaderboard(start_date or None, end_date or None)
+        automated_leaderboard, in_progress_leaderboard, total_automated, pending_automation, automated_in_period, in_progress_in_period = fetch_leaderboard(start_date or None, end_date or None)
 
     return render_template("leaderboard.html",
-                         leaderboard=leaderboard,
+                         automated_leaderboard=automated_leaderboard,
+                         in_progress_leaderboard=in_progress_leaderboard,
                          total_automated=total_automated,
                          pending_automation=pending_automation,
                          automated_in_period=automated_in_period,
+                         in_progress_in_period=in_progress_in_period,
                          start_date=start_date,
                          end_date=end_date)
 
