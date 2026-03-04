@@ -11,6 +11,7 @@
 <body>
     <div class="container fade-in">
         <h1>🏆 Automation Leaderboard</h1>
+        <p class="subtitle">Track and celebrate your team's automation achievements</p>
 
         <form method="post" id="leaderboardForm">
             <div class="form-group">
@@ -34,20 +35,53 @@
 
         {% if total_automated or pending_automation %}
             <div class="stats">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <p>Total Test Cases Automated: <strong>{{ total_automated }}</strong></p>
-                <p>Pending Cases to Automate: <strong>{{ pending_automation }}</strong></p>
-                <p>Test Cases Automated during the period: <strong>{{ automated_in_period }}</strong></p>
-                <p>Test Cases In Progress during the period: <strong>{{ in_progress_in_period }}</strong></p>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Total Automated</div>
+                            <div class="stat-value">{{ total_automated }}</div>
+                        </div>
+                        <div class="stat-icon success">✓</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Pending Automation</div>
+                            <div class="stat-value">{{ pending_automation }}</div>
+                        </div>
+                        <div class="stat-icon warning">⏳</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Automated (Period)</div>
+                            <div class="stat-value">{{ automated_in_period }}</div>
+                        </div>
+                        <div class="stat-icon info">📊</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">In Progress (Period)</div>
+                            <div class="stat-value">{{ in_progress_in_period }}</div>
+                        </div>
+                        <div class="stat-icon warning">🔄</div>
+                    </div>
+                </div>
             </div>
         {% endif %}
 
         <!-- Automated Tests Leaderboard -->
         {% if automated_leaderboard %}
-            <h2 class="section-title">✅ Automated Tests</h2>
-            <table id="automatedTable" class="leaderboard-table">
+            <div class="table-wrapper">
+                <h2 class="section-title">
+                    <span style="background: linear-gradient(135deg, #10B981, #059669); padding: 0.5rem; border-radius: 8px; color: white; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;">✓</span>
+                    Automated Tests
+                </h2>
+                <table id="automatedTable" class="leaderboard-table">
                 <thead>
                     <tr>
                         <th>Rank</th>
@@ -95,12 +129,17 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
         {% endif %}
 
         <!-- In Progress Tests Leaderboard -->
         {% if in_progress_leaderboard %}
-            <h2 class="section-title">🔄 In Progress Tests</h2>
-            <table id="inProgressTable" class="leaderboard-table">
+            <div class="table-wrapper">
+                <h2 class="section-title">
+                    <span style="background: linear-gradient(135deg, #F59E0B, #D97706); padding: 0.5rem; border-radius: 8px; color: white; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;">🔄</span>
+                    In Progress Tests
+                </h2>
+                <table id="inProgressTable" class="leaderboard-table">
                 <thead>
                     <tr>
                         <th>Rank</th>
@@ -148,6 +187,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
         {% endif %}
 
         {% if not automated_leaderboard and not in_progress_leaderboard and start_date and end_date %}
